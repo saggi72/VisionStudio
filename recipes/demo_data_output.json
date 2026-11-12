@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "recipe": {
+    "id": "DEMO-DATA-OUTPUT",
+    "name": "Mô phỏng: gửi kết quả qua kênh truyền",
+    "version": 1
+  },
+  "devices": {
+    "cam1": {
+      "kind": "camera",
+      "provider": "sim",
+      "name": "Camera 1 (Sim - Top)",
+      "view": "top"
+    },
+    "cam2": {
+      "kind": "camera",
+      "provider": "sim",
+      "name": "Camera 2 (Sim - Side)",
+      "view": "side"
+    },
+    "plc1": {
+      "kind": "plc",
+      "provider": "sim",
+      "name": "PLC mô phỏng (Line 1)"
+    },
+    "com1": {
+      "kind": "comm",
+      "provider": "sim",
+      "name": "Kênh mô phỏng (đổi sang serial / tcp trong tab Thiết bị)"
+    }
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "cam1",
+        "type": "source.camera",
+        "title": "Camera 1 (Top)",
+        "params": {
+          "device": "cam1"
+        },
+        "ui": {
+          "x": 40,
+          "y": 110
+        }
+      },
+      {
+        "id": "cam2",
+        "type": "source.camera",
+        "title": "Camera 2 (Side)",
+        "params": {
+          "device": "cam2"
+        },
+        "ui": {
+          "x": 40,
+          "y": 300
+        }
+      },
+      {
+        "id": "sync1",
+        "type": "source.multicam_sync",
+        "title": "Multi-Cam Sync",
+        "params": {
+          "max_tolerance_ms": 250.0
+        },
+        "ui": {
+          "x": 300,
+          "y": 200
+        }
+      },
+      {
+        "id": "det1",
+        "type": "ai.blob_detect",
+        "title": "Color Blob Detector",
+        "params": {
+          "classes": "connector,screw",
+          "conf_threshold": 0.5,
+          "min_area": 300
+        },
+        "ui": {
+          "x": 560,
+          "y": 200
+        }
+      },
+      {
+        "id": "cnt1",
+        "type": "logic.count_by_class",
+        "title": "Count by Class",
+        "params": {
+          "expect": "connector=4,screw=2",
+          "strict": true
+        },
+        "ui": {
+          "x": 820,
+          "y": 200
+        }
+      },
+      {
+        "id": "plc1",
+        "type": "io.plc_handshake",
+        "title": "PLC Handshake",
+        "params": {
+          "device": "plc1"
+        },
+        "ui": {
+          "x": 1080,
+          "y": 200
+        }
+      },
+      {
+        "id": "out1",
+        "type": "io.data_output",
+        "title": "Data Output",
+        "params": {
+          "device": "com1",
+          "format": "template",
+          "template": "{job_id},{status},{serial},{reasons}",
+          "line_ending": "CRLF",
+          "encoding": "ascii",
+          "send_when": "always"
+        },
+        "ui": {
+          "x": 1080,
+          "y": 370
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "cam1.frame",
+        "to": "sync1.cam1"
+      },
+      {
+        "from": "cam2.frame",
+        "to": "sync1.cam2"
+      },
+      {
+        "from": "sync1.synced_pair",
+        "to": "det1.image"
+      },
+      {
+        "from": "det1.detections",
+        "to": "cnt1.detections"
+      },
+      {
+        "from": "cnt1.result",
+        "to": "plc1.result"
+      },
+      {
+        "from": "cnt1.result",
+        "to": "out1.result"
+      }
+    ]
+  }
+}

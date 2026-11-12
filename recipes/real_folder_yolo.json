@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "recipe": {
+    "id": "REAL-FOLDER-YOLO",
+    "name": "Detect thật: thư mục ảnh + YOLO11n",
+    "version": 1
+  },
+  "devices": {
+    "cam1": {
+      "kind": "camera",
+      "provider": "folder",
+      "name": "Thư mục ảnh mẫu",
+      "path": "samples"
+    }
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "cam1",
+        "type": "source.camera",
+        "title": "Camera",
+        "params": {
+          "device": "cam1"
+        },
+        "ui": {
+          "x": 40,
+          "y": 200
+        }
+      },
+      {
+        "id": "det1",
+        "type": "ai.yolo_onnx",
+        "title": "YOLO11n (ONNX)",
+        "params": {
+          "model": "models/yolo11n.onnx",
+          "class_names": "",
+          "only_classes": "person",
+          "conf_threshold": 0.5,
+          "nms_iou": 0.45,
+          "backend": "auto"
+        },
+        "ui": {
+          "x": 320,
+          "y": 200
+        }
+      },
+      {
+        "id": "cnt1",
+        "type": "logic.count_by_class",
+        "title": "Count by Class",
+        "params": {
+          "expect": "person=1",
+          "strict": false
+        },
+        "ui": {
+          "x": 600,
+          "y": 200
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "cam1.frame",
+        "to": "det1.image"
+      },
+      {
+        "from": "det1.detections",
+        "to": "cnt1.detections"
+      }
+    ]
+  }
+}

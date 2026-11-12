@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "recipe": {
+    "id": "REAL-WEBCAM-YOLO",
+    "name": "Detect thật: webcam + YOLO11n",
+    "version": 6
+  },
+  "devices": {
+    "cam1": {
+      "kind": "camera",
+      "provider": "opencv",
+      "name": "Webcam USB",
+      "source": 0
+    },
+    "011": {
+      "kind": "plc",
+      "provider": "modbus",
+      "name": "OPC1",
+      "host": "192.168.0.10",
+      "port": 502,
+      "tags": {
+        "busy": 0,
+        "done": 1,
+        "result_ok": 2,
+        "result_ng": 3
+      }
+    }
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "cam1",
+        "type": "source.camera",
+        "title": "Camera",
+        "params": {
+          "device": "cam1"
+        },
+        "ui": {
+          "x": 60.0,
+          "y": 320.0
+        }
+      },
+      {
+        "id": "cnt1",
+        "type": "logic.count_by_class",
+        "title": "Count by Class",
+        "params": {
+          "expect": "person=1",
+          "strict": false
+        },
+        "ui": {
+          "x": 1500.0,
+          "y": 260.0
+        }
+      },
+      {
+        "id": "camera1",
+        "type": "source.camera",
+        "title": "Camera",
+        "params": {
+          "device": "cam1"
+        },
+        "ui": {
+          "x": 60.0,
+          "y": 200.0
+        }
+      },
+      {
+        "id": "multicam_sync1",
+        "type": "source.multicam_sync",
+        "title": "Multi-Cam Sync",
+        "params": {
+          "max_tolerance_ms": 250.0
+        },
+        "ui": {
+          "x": 350.0,
+          "y": 250.0
+        }
+      },
+      {
+        "id": "threshold1",
+        "type": "classic.threshold",
+        "title": "Threshold",
+        "params": {
+          "method": "otsu",
+          "thresh": 128,
+          "invert": false
+        },
+        "ui": {
+          "x": 640.0,
+          "y": 250.0
+        }
+      },
+      {
+        "id": "gaussian_blur1",
+        "type": "classic.gaussian_blur",
+        "title": "Gaussian Blur",
+        "params": {
+          "ksize": 5
+        },
+        "ui": {
+          "x": 920.0,
+          "y": 260.0
+        }
+      },
+      {
+        "id": "yolo_onnx1",
+        "type": "ai.yolo_onnx",
+        "title": "YOLO Detector (ONNX)",
+        "params": {
+          "model": "",
+          "class_names": "",
+          "only_classes": "",
+          "conf_threshold": 0.5,
+          "nms_iou": 0.45,
+          "backend": "auto"
+        },
+        "ui": {
+          "x": 1210.0,
+          "y": 260.0
+        }
+      },
+      {
+        "id": "plc_handshake1",
+        "type": "io.plc_handshake",
+        "title": "PLC Handshake",
+        "params": {
+          "device": "plc1"
+        },
+        "ui": {
+          "x": 1790.0,
+          "y": 260.0
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "camera1.frame",
+        "to": "multicam_sync1.cam1"
+      },
+      {
+        "from": "cam1.frame",
+        "to": "multicam_sync1.cam2"
+      },
+      {
+        "from": "multicam_sync1.synced_pair",
+        "to": "threshold1.image"
+      },
+      {
+        "from": "threshold1.mask",
+        "to": "gaussian_blur1.image"
+      },
+      {
+        "from": "gaussian_blur1.image",
+        "to": "yolo_onnx1.image"
+      },
+      {
+        "from": "yolo_onnx1.detections",
+        "to": "cnt1.detections"
+      },
+      {
+        "from": "cnt1.result",
+        "to": "plc_handshake1.result"
+      }
+    ]
+  }
+}
