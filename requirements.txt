@@ -1,0 +1,14 @@
+# Required (64-bit Python only)
+PyQt6>=6.5
+numpy>=1.24
+opencv-python-headless>=4.8
+onnxruntime>=1.17    # node "YOLO Detector (ONNX)"; use onnxruntime-gpu for NVIDIA
+
+# Optional - install only when needed
+openpyxl           # Excel report export
+pyserial>=3.5      # serial channel: UART / RS-232 / RS-485 (also needed for Modbus RTU)
+pymodbus>=3.6      # PLC Modbus TCP and Modbus RTU
+pysoem             # EtherCAT channel (needs admin rights; Npcap on Windows)
+ultralytics        # node "YOLO Detector (Ultralytics .pt)" and fine-tune (AGPL-3.0, pulls PyTorch)
+pytest             # run tests:  python -m pytest tests -q
+psutil             # memory checks in tests/test_stress.py
